@@ -1,0 +1,8 @@
+#!/home/nevess_michel_gmail_com/test/venv/bin/python3.6
+# -*- coding: utf-8 -*-
+
+from eloquent.commands.application import application
+
+
+if __name__ == '__main__':
+    application.run()
