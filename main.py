@@ -1,28 +1,35 @@
-import os, sys
+import os, sys, requests
 sys.path.append('./venv/lib/python3.6/site-packages')
 
 from flask import Flask, request
-from flask_socketio import SocketIO, send
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socket = SocketIO(app)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 message = 'It Works!!!!!'
 
-@socket.on('connect')
-def test_connection():
-	global message
-	message = request.sid
-@socket.on('test')
-def test_socket(data):
-	global message
-	message = data
-	socket.emit('test', data)
+#rota de registro do webhook
+@app.route('/', methods=['GET'])
+def verify():
+	#verifica se está tentando cadastrar o bot na API
+	if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
+	#verifica se o token usado no webhook é o mesmo do programa
+		if not request.args.get("hub.verify_token") == "RandomTestToken":
+			return "Verification token mismatch", 403
+		return request.args["hub.challenge"], 200
+	return "OK", 200
+
+#Rota de recebimento de mensagens
+@app.route('/', methods=['POST'])
+def webhook():
+	#Pegas os dados do request em formato Json
+	data = request.get_json()
+	req = requests.post("http://35.236.87.50:8080/", json=data)
+	return "OK", 200
 
 @app.route('/test')
 def test_http():
@@ -32,4 +39,4 @@ def test_http():
 if(__name__ == '__main__'):
 	app.threaded = True
 	app.port = 8080
-	socket.run(app, port=8080, debug=True)
+	app.run(host="0.0.0.0", debug=True)
